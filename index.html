@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上半年度员工心声诉求全景驾驶舱 · 三页动态版</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: #f0f2f5;
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            padding: 20px;
+            color: #2c3e50;
+        }
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            padding: 25px 30px 20px;
+        }
+        .header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .tab-btn {
+            padding: 10px 24px;
+            background: transparent;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #6c757d;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: #2a5298;
+            border-bottom-color: #2a5298;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .kpi-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 18px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 18px 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            border: 1px solid #f0f0f0;
+            transition: transform 0.2s;
+        }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+        .card .label { font-size: 14px; color: #7f8c8d; margin-bottom: 8px; }
+        .card .value { font-size: 32px; font-weight: 700; color: #1e3c72; line-height: 1.2; }
+        .card .detail { font-size: 13px; color: #95a5a6; margin-top: 6px; }
+        .chart-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .chart-row.single { grid-template-columns: 1fr; }
+        .chart-box {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            border: 1px solid #f0f0f0;
+        }
+        .chart-box h3 {
+            font-size: 16px; font-weight: 600; color: #2c3e50;
+            margin-bottom: 10px; padding-left: 10px; border-left: 4px solid #2a5298;
+        }
+        .chart-container { width: 100%; height: 380px; }
+        .chart-container.large { height: 430px; }
+        .wordcloud-wrapper {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+            gap: 12px 20px; min-height: 200px; background: #f9fafb; border-radius: 16px; padding: 15px;
+        }
+        .wordcloud-wrapper span { display: inline-block; transition: 0.2s; font-weight: 500; cursor: default; }
+        .wordcloud-wrapper span:hover { transform: scale(1.15); opacity: 0.9; }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-bottom: 25px;
+        }
+        .base-detail-card {
+            background: #f9fafb;
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid #e9ecef;
+        }
+        .base-detail-card .base-name { font-size: 16px; font-weight: 700; color: #2a5298; margin-bottom: 6px; }
+        .base-detail-card .stats { display: flex; gap: 14px; font-size: 13px; color: #495057; margin-bottom: 8px; }
+        .base-detail-card .tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+        .tag {
+            background: #e8f0fe; color: #2a5298; font-size: 11px; padding: 3px 10px;
+            border-radius: 16px; font-weight: 500;
+        }
+        .base-detail-card .feature { font-size: 12px; color: #6c757d; margin-top: 8px; line-height: 1.4; }
+
+        .profile-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+        .profile-table th {
+            background: #f5f7fa;
+            color: #2c3e50;
+            font-weight: 600;
+            padding: 12px 10px;
+            text-align: left;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .profile-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+        .cat-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 4px 0;
+        }
+        .cat-bar .cat-name {
+            width: 85px;
+            text-align: right;
+            font-size: 12px;
+            color: #495057;
+        }
+        .cat-bar .bar-bg {
+            flex: 1;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .cat-bar .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: #2a5298;
+        }
+        .cat-bar .cat-pct {
+            width: 40px;
+            font-size: 12px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .editable-cell {
+            background: #fffde7;
+            border: 1px dashed #f4a261;
+            border-radius: 4px;
+            padding: 4px 8px;
+            width: 60px;
+            text-align: center;
+            font-size: 12px;
+        }
+        .editable-cell:focus {
+            outline: none;
+            border-color: #e15554;
+            background: #fff;
+        }
+        .cat-input {
+            width: 55px;
+            background: #fffde7;
+            border: 1px dashed #f4a261;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+            padding: 2px 4px;
+        }
+        .btn-reset {
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 6px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: 0.2s;
+            margin-left: 15px;
+        }
+        .btn-reset:hover { background: #f5f5f5; border-color: #aaa; }
+        .footer-note { text-align: right; font-size: 12px; color: #b0b0b0; margin-top: 15px; }
+        @media (max-width: 1000px) {
+            .chart-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="dashboard">
+    <div class="header">
+        <div>
+            <h1>📊 上半年度员工心声诉求全景驾驶舱</h1>
+            <div style="color:#7f8c8d; font-size:14px;">覆盖18家单位 · 总览 · 画像 · 动态更新</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span style="color:#5a6c7d; font-size:13px; background:#f5f7fa; padding:8px 16px; border-radius:20px;">⏱️ 数据截至 2026-06-12</span>
+            <button class="btn-reset" onclick="resetAllData()">↺ 重置原始数据</button>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('overview')">📋 总览仪表盘</button>
+        <button class="tab-btn" onclick="switchTab('portrait')">🔍 基地分类微观画像</button>
+        <button class="tab-btn" onclick="switchTab('editor')">✎ 动态数据更新</button>
+    </div>
+
+    <!-- ========= 总览仪表盘 ========= -->
+    <div id="tab-overview" class="tab-content active">
+        <div class="kpi-cards">
+            <div class="card"><div class="label">📌 诉求总数</div><div class="value" id="totalDemands">0</div><div class="detail">18家单位合计</div></div>
+            <div class="card"><div class="label">✅ 平均办结率</div><div class="value" id="avgResolve">0%</div><div class="detail">已办结/诉求总数</div></div>
+            <div class="card"><div class="label">🔥 诉求最多基地</div><div class="value" id="topBase">-</div><div class="detail" id="topBaseCount"></div></div>
+            <div class="card"><div class="label">⏳ 阶段性推进事项</div><div class="value" id="ongoingTotal">0</div><div class="detail">需持续跟进</div></div>
+        </div>
+        <div class="chart-row">
+            <div class="chart-box"><h3>📋 各单位诉求总数排名</h3><div class="chart-container" id="chart-bar"></div></div>
+            <div class="chart-box"><h3>🎯 办结率对比 (85%目标线)</h3><div class="chart-container" id="chart-rate"></div></div>
+        </div>
+        <div class="chart-row single">
+            <div class="chart-box"><h3>🫧 诉求体量 & 办结效率气泡图</h3><div class="chart-container" id="chart-bubble"></div></div>
+        </div>
+        <div class="chart-row">
+            <div class="chart-box"><h3>☁️ 高频关键词云</h3><div class="wordcloud-wrapper" id="wordcloud-manual"></div></div>
+            <div class="chart-box"><h3>📋 基地状态速览</h3><div style="overflow-y:auto; max-height:380px;" id="status-table"></div></div>
+        </div>
+    </div>
+
+    <!-- ========= 基地分类微观画像（静态展示） ========= -->
+    <div id="tab-portrait" class="tab-content">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+            <h3 style="border-left:4px solid #2a5298; padding-left:12px;">🏢 各基地诉求分类与办结详情</h3>
+            <div style="font-size:13px; color:#6c757d;">📊 静态展示，数据可到「动态数据更新」页编辑</div>
+        </div>
+        <div class="detail-grid" id="baseCardsContainer"></div>
+        <div class="chart-box" style="margin-top:25px;">
+            <h3>📑 诉求类别占比明细</h3>
+            <div style="overflow-x:auto;" id="profileTableContainer"></div>
+        </div>
+        <div class="chart-row single" style="margin-top:20px;">
+            <div class="chart-box">
+                <h3>🌹 诉求大类提及频次玫瑰图</h3>
+                <div class="chart-container large" id="chart-rose"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========= 动态数据更新（可编辑） ========= -->
+    <div id="tab-editor" class="tab-content">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:15px;">
+            <h3 style="border-left:4px solid #e15554; padding-left:12px;">✎ 在线编辑数据</h3>
+            <div style="font-size:12px; color:#e15554;">修改黄色背景单元格，所有视图实时同步</div>
+        </div>
+        <div class="chart-box">
+            <div style="overflow-x:auto;" id="editorTableContainer"></div>
+        </div>
+        <div style="margin-top:20px; font-size:13px; color:#6c757d;">
+            💡 提示：修改后请切换到「总览仪表盘」或「基地分类微观画像」查看更新效果。
+        </div>
+    </div>
+    <div class="footer-note">数据来源：各基地上半年度员工心声汇报 · 内部参考</div>
+</div>
+
+<script>
+(function() {
+    // ---------- 原始数据备份 ----------
+    const originalBases = [
+        { name:"沈阳基地", total:41, resolved:34, ongoing:0, pending:7, rate:0.8293, cats:{ rest:0.341, traffic:0.293, other:0.366 }, features:"设施智能化、通勤科学化、薪酬合理化", tags:["办公休息","交通通勤"] },
+        { name:"新疆基地", total:63, resolved:null, ongoing:null, pending:null, rate:null, cats:{ production:0.413, logistics:0.254, support:0.095, other:0.238 }, features:"转场点位分散、春运保供、新设备磨合", tags:["生产运行","后勤保障","支援保障"] },
+        { name:"北京基地", total:73, resolved:57, ongoing:0, pending:16, rate:0.7808, cats:null, features:"反光衣申领、劳保鞋不适、食堂品质", tags:["劳保用品","后勤餐饮","流程优化"] },
+        { name:"深圳基地", total:14, resolved:9, ongoing:5, pending:0, rate:0.6429, cats:null, features:"急救药品、高温防护、职工小家设施", tags:["健康安全","后勤休憩","文体活动"] },
+        { name:"黑龙江基地", total:40, resolved:31, ongoing:0, pending:9, rate:0.775, cats:{ logistics:0.45, scheduling:0.275, salary:0.125, other:0.15 }, features:"排班优化、餐饮交通、三方激励", tags:["后勤保障","排班减负","薪酬福利"] },
+        { name:"吉林基地", total:32, resolved:30, ongoing:2, pending:0, rate:0.9375, cats:null, features:"自建洗衣房，需求转向心理健康", tags:["工装洗护","膳食优化","职业健康"] },
+        { name:"大连基地", total:70, resolved:50, ongoing:10, pending:10, rate:0.7143, cats:null, features:"跨单位协调链长，食堂物价偏高", tags:["值班环境","劳保用品","休息区改造"] },
+        { name:"湖北基地", total:50, resolved:34, ongoing:16, pending:0, rate:0.68, cats:{ business:0.54, logistics:0.26, other:0.20 }, features:"业务支撑体系跟不上生产节奏", tags:["生产排班","流程优化","后勤保障"] },
+        { name:"湖南基地", total:81, resolved:null, ongoing:null, pending:null, rate:null, cats:null, features:"高温露天倒班，追求体面作业", tags:["薪酬绩效","食宿环境","劳保防护","工时管控"] },
+        { name:"海口基地", total:10, resolved:10, ongoing:0, pending:0, rate:1.0, cats:null, features:"年轻员工多，要吃得健康实惠", tags:["高温防暑","食堂餐饮"] },
+        { name:"广西基地", total:118, resolved:86, ongoing:21, pending:10, rate:0.7288, cats:{ production:0.32, tools:0.28, logistics:0.12, other:0.28 }, features:"旺季压力、改革重组阵痛", tags:["生产流程","工具航材","后勤保障","培训标准化"] },
+        { name:"上海基地", total:30, resolved:30, ongoing:0, pending:0, rate:1.0, cats:null, features:"管理精细化匹配不上高品质诉求", tags:["通勤服务","劳保物资","餐饮品质"] },
+        { name:"汕头基地", total:15, resolved:14, ongoing:1, pending:0, rate:0.9333, cats:null, features:"后勤精细化、职业健康常态化", tags:["劳保后勤","食堂餐饮","休憩保障","健康疗养"] },
+        { name:"河南基地", total:97, resolved:87, ongoing:7, pending:3, rate:0.8969, cats:null, features:"民生类占比高，改善需求迫切", tags:["劳保用品","休憩环境","食堂餐食","健康保障"] },
+        { name:"三亚基地", total:17, resolved:16, ongoing:0, pending:1, rate:0.9412, cats:null, features:"夜班密集、外场搬迁，就餐条件受限", tags:["夜班餐食","绩效考核透明"] },
+        { name:"西安基地", total:9, resolved:9, ongoing:0, pending:0, rate:1.0, cats:null, features:"二维码反馈机制提升整改效率", tags:["餐饮优化","急救健康","劳保适配"] },
+        { name:"珠海基地", total:20, resolved:16, ongoing:4, pending:0, rate:0.8, cats:null, features:"刚需托底，改善型需求上升", tags:["薪资发放","福利兑现","后勤服务"] },
+        { name:"北维公司", total:24, resolved:12, ongoing:12, pending:0, rate:0.5, cats:null, features:"基础保障占主导，流程优化诉求明确", tags:["薪酬福利","绩效考核"] }
+    ];
+
+    // 当前工作数据
+    let basesData = JSON.parse(JSON.stringify(originalBases));
+
+    const catNameMap = {
+        rest:'办公休息环境', traffic:'交通通勤', other:'其他',
+        production:'生产流程', logistics:'后勤保障', support:'支援保障',
+        scheduling:'排班减负', salary:'薪酬福利', business:'业务管理',
+        tools:'工具航材'
+    };
+
+    const wordFreq = [
+        {text:"后勤保障",size:42,color:"#2a5298"},{text:"食堂餐饮",size:48,color:"#3b6fb6"},
+        {text:"劳保用品",size:44,color:"#5191d0"},{text:"通勤交通",size:38,color:"#355c7d"},
+        {text:"排班减负",size:34,color:"#6baed6"},{text:"流程优化",size:30,color:"#e15554"},
+        {text:"高温防护",size:28,color:"#f4a261"},{text:"薪酬福利",size:32,color:"#4c9f70"},
+        {text:"生产运行",size:28,color:"#6c5b7b"},{text:"工具航材",size:24,color:"#c6dbef"},
+        {text:"休息环境",size:26,color:"#9ecae1"},{text:"心理健康",size:22,color:"#e15554"},
+        {text:"文体活动",size:24,color:"#f4a261"},{text:"健康安全",size:22,color:"#4c9f70"},
+    ];
+
+    const charts = {};
+
+    function recalcRate(base) {
+        if (base.resolved !== null && base.total > 0) base.rate = base.resolved / base.total;
+        else base.rate = null;
+    }
+
+    const updateAllViews = debounce(function() {
+        updateKPIs();
+        updateStatusTable();
+        updateCards();
+        updateStaticProfileTable();
+        updateEditorTable(); 
+        updateBarChart();
+        updateRateChart();
+        updateBubbleChart();
+        updateRoseChart();
+    }, 100);
+
+    function updateKPIs() {
+        const total = basesData.reduce((s,b)=>s+b.total,0);
+        const valid = basesData.filter(b=>b.rate!==null).map(b=>b.rate);
+        const avg = valid.length ? (valid.reduce((a,c)=>a+c,0)/valid.length*100).toFixed(1) : 0;
+        const top = [...basesData].sort((a,b)=>b.total-a.total)[0];
+        const ongoingSum = basesData.reduce((s,b)=>s+(b.ongoing||0),0);
+        document.getElementById('totalDemands').innerText = total;
+        document.getElementById('avgResolve').innerText = avg+'%';
+        document.getElementById('topBase').innerText = top.name;
+        document.getElementById('topBaseCount').innerText = `诉求 ${top.total} 条`;
+        document.getElementById('ongoingTotal').innerText = ongoingSum;
+    }
+
+    function updateStatusTable() {
+        const div = document.getElementById('status-table');
+        let html = '<table style="width:100%;font-size:12px;border-collapse:collapse;">';
+        html += '<tr style="background:#f5f7fa;"><th style="text-align:left;padding:8px;">基地</th><th>诉求</th><th>已办结</th><th>推进</th><th>待办</th><th>办结率</th></tr>';
+        basesData.forEach(b=>{
+            const rateStr = b.rate!==null ? (b.rate*100).toFixed(1)+'%' : '--';
+            const bg = b.rate!==null && b.rate<0.75 ? 'rgba(225,85,84,0.08)' : 'transparent';
+            html += `<tr style="background:${bg};border-bottom:1px solid #f0f0f0;">
+                <td style="padding:8px;font-weight:500;">${b.name}</td><td style="text-align:center;">${b.total}</td>
+                <td style="text-align:center;">${b.resolved??'--'}</td><td style="text-align:center;">${b.ongoing??'--'}</td>
+                <td style="text-align:center;">${b.pending??'--'}</td>
+                <td style="text-align:center;font-weight:600;color:${b.rate!==null&&b.rate<0.75?'#e15554':'#2a5298'}">${rateStr}</td></tr>`;
+        });
+        html += '</table>'; div.innerHTML = html;
+    }
+
+    function updateCards() {
+        const container = document.getElementById('baseCardsContainer');
+        if(!container) return;
+        let html = '';
+        basesData.forEach(b=>{
+            const rateStr = b.rate!==null ? (b.rate*100).toFixed(1)+'%' : '--';
+            html += `<div class="base-detail-card">
+                <div class="base-name">${b.name}</div>
+                <div class="stats"><span>📌 ${b.total}条</span><span>✅ ${rateStr}</span><span>⏳ 推进${b.ongoing??0}</span></div>
+                <div class="tags">${(b.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+                <div class="feature">📝 ${b.features||''}</div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    // 静态画像表格
+    function updateStaticProfileTable() {
+        const container = document.getElementById('profileTableContainer');
+        if(!container) return;
+        let tbl = '<table class="profile-table"><thead><tr><th>基地</th><th>诉求</th><th>已办结/推进/待办</th><th>办结率</th><th>主要类别占比</th></tr></thead><tbody>';
+        basesData.forEach(b=>{
+            const rateStr = b.rate!==null ? (b.rate*100).toFixed(1)+'%' : '--';
+            let catHtml = '';
+            if(b.cats && Object.keys(b.cats).length>0) {
+                Object.entries(b.cats).forEach(([key,val])=>{
+                    const pct = (val*100).toFixed(1);
+                    const name = catNameMap[key]||key;
+                    catHtml += `<div class="cat-bar"><span class="cat-name">${name}</span><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;"></div></div><span class="cat-pct">${pct}%</span></div>`;
+                });
+            } else {
+                catHtml = '<span style="color:#95a5a6;font-size:12px;">暂无量化分类</span>';
+            }
+            tbl += `<tr><td><strong>${b.name}</strong></td><td>${b.total}</td><td>${b.resolved??'--'} / ${b.ongoing??'--'} / ${b.pending??'--'}</td><td>${rateStr}</td><td>${catHtml}</td></tr>`;
+        });
+        tbl += '</tbody></table>';
+        container.innerHTML = tbl;
+    }
+
+    // 可编辑表格
+    function updateEditorTable() {
+        const container = document.getElementById('editorTableContainer');
+        if(!container) return;
+        let tbl = '<table class="profile-table"><thead><tr><th>基地</th><th>诉求总数</th><th>已办结 / 推进 / 待办</th><th>办结率</th><th>类别占比（可编辑）</th></tr></thead><tbody>';
+        basesData.forEach((b,idx)=>{
+            const rateStr = b.rate!==null ? (b.rate*100).toFixed(1)+'%' : '--';
+            let catHtml = '';
+            if(b.cats && Object.keys(b.cats).length>0) {
+                Object.entries(b.cats).forEach(([key,val])=>{
+                    const pct = (val*100).toFixed(1);
+                    const name = catNameMap[key]||key;
+                    catHtml += `<div class="cat-bar"><span class="cat-name">${name}</span><input class="cat-input" data-base="${idx}" data-cat="${key}" value="${pct}" step="0.1" min="0" max="100"> %</div>`;
+                });
+            } else {
+                catHtml = '<span style="color:#95a5a6;font-size:12px;">无分类数据</span>';
+            }
+            tbl += `<tr>
+                <td><strong>${b.name}</strong></td>
+                <td><input class="editable-cell" data-base="${idx}" data-field="total" value="${b.total}" min="0"></td>
+                <td><input class="editable-cell" data-base="${idx}" data-field="resolved" value="${b.resolved??''}" placeholder="-" min="0" style="width:55px;"> /
+                    <input class="editable-cell" data-base="${idx}" data-field="ongoing" value="${b.ongoing??''}" placeholder="-" min="0" style="width:55px;"> /
+                    <input class="editable-cell" data-base="${idx}" data-field="pending" value="${b.pending??''}" placeholder="-" min="0" style="width:55px;"></td>
+                <td>${rateStr}</td>
+                <td>${catHtml}</td>
+            </tr>`;
+        });
+        tbl += '</tbody></table>';
+        container.innerHTML = tbl;
+
+        // 绑定事件
+        container.querySelectorAll('input.editable-cell').forEach(input=>{
+            input.addEventListener('input', function(){
+                const idx = parseInt(this.dataset.base);
+                const field = this.dataset.field;
+                let val = this.value.trim()==='' ? null : parseInt(this.value);
+                if(val!==null && isNaN(val)) return;
+                if(val!==null && val<0) val=0;
+                basesData[idx][field] = val;
+                recalcRate(basesData[idx]);
+                updateAllViews();
+            });
+        });
+        container.querySelectorAll('input.cat-input').forEach(input=>{
+            input.addEventListener('input', function(){
+                const idx = parseInt(this.dataset.base);
+                const catKey = this.dataset.cat;
+                let val = parseFloat(this.value);
+                if(isNaN(val)) val=0;
+                val = Math.min(100, Math.max(0, val));
+                this.value = val.toFixed(1);
+                if(basesData[idx].cats) basesData[idx].cats[catKey] = val/100;
+                updateAllViews();
+            });
+        });
+    }
+
+    function getBarOption() {
+        const sorted = [...basesData].sort((a,b)=>b.total-a.total);
+        return {
+            tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+            grid:{left:'22%',right:'5%',top:10,bottom:20},
+            xAxis:{type:'value',name:'诉求总数'},
+            yAxis:{type:'category',data:sorted.map(b=>b.name),inverse:true,axisLabel:{fontSize:11}},
+            series:[{type:'bar',data:sorted.map(b=>b.total),
+                itemStyle:{color:new echarts.graphic.LinearGradient(0,0,1,0,[{offset:0,color:'#2a5298'},{offset:1,color:'#6baed6'}]),borderRadius:[0,8,8,0]},
+                label:{show:true,position:'right',fontSize:11}}]
+        };
+    }
+    function updateBarChart() { if(charts.bar) charts.bar.setOption(getBarOption()); }
+
+    function getRateOption() {
+        return {
+            tooltip:{trigger:'axis'},
+            grid:{left:'12%',right:'5%',top:20,bottom:50},
+            xAxis:{type:'category',data:basesData.map(b=>b.name),axisLabel:{rotate:35,fontSize:10}},
+            yAxis:{type:'value',name:'办结率(%)',max:105},
+            series:[
+                {type:'bar',data:basesData.map(b=>b.rate!==null?(b.rate*100).toFixed(1):null),itemStyle:{color:'#5191d0'},label:{show:true,position:'top',fontSize:9,formatter:p=>p.value?p.value+'%':''}},
+                {type:'line',data:basesData.map(()=>85),symbol:'none',lineStyle:{color:'#e15554',type:'dashed',width:2}}
+            ]
+        };
+    }
+    function updateRateChart() { if(charts.rate) charts.rate.setOption(getRateOption()); }
+
+    function getBubbleOption() {
+        const data = basesData.filter(b=>b.rate!==null).map(b=>({name:b.name,value:[b.total,(b.rate*100).toFixed(1),b.ongoing||0]}));
+        return {
+            tooltip:{trigger:'item',formatter:p=>`${p.name}<br/>诉求：${p.value[0]}条<br/>办结率：${p.value[1]}%<br/>推进：${p.value[2]}项`},
+            grid:{left:'15%',right:'8%',top:15,bottom:25},
+            xAxis:{type:'value',name:'诉求总数'},
+            yAxis:{type:'value',name:'办结率(%)',min:40,max:105},
+            series:[{type:'scatter',data:data,symbolSize:val=>Math.max(12,Math.min(60,val[2]*5+15)),
+                itemStyle:{color:'#2a5298',shadowBlur:8},label:{show:true,formatter:p=>p.name,position:'top',fontSize:9}}]
+        };
+    }
+    function updateBubbleChart() { if(charts.bubble) charts.bubble.setOption(getBubbleOption()); }
+
+    function updateRoseChart() {
+        if(!charts.rose) return;
+        const intensityMap = {
+            "沈阳基地":{后勤保障:2,交通通勤:3,其他:1},"新疆基地":{生产流程:3,后勤保障:2,其他:1},
+            "北京基地":{劳保用品:3,餐饮:2,生产流程:1},"深圳基地":{健康安全:2,后勤保障:2,文体活动:1},
+            "黑龙江基地":{后勤保障:3,排班减负:2,薪酬福利:1},"吉林基地":{后勤保障:2,健康安全:1,文体活动:1},
+            "大连基地":{后勤保障:2,劳保用品:2,餐饮:1},"湖北基地":{生产流程:3,后勤保障:2},
+            "湖南基地":{薪酬福利:2,后勤保障:2,劳保用品:2,排班减负:1},"海口基地":{健康安全:2,餐饮:2},
+            "广西基地":{生产流程:3,工具航材:3,后勤保障:1,技能培训:1},"上海基地":{交通通勤:2,劳保用品:1,餐饮:1},
+            "汕头基地":{后勤保障:2,餐饮:1,健康安全:1,文体活动:1},"河南基地":{劳保用品:2,后勤保障:1,餐饮:1,健康安全:1,文体活动:1},
+            "三亚基地":{餐饮:2,薪酬福利:1},"西安基地":{餐饮:2,健康安全:1,劳保用品:1},
+            "珠海基地":{薪酬福利:3,后勤保障:2},"北维公司":{薪酬福利:3,生产流程:1}
+        };
+        const categoryKeys = ["后勤保障","餐饮","交通通勤","排班减负","生产流程","劳保用品","薪酬福利","健康安全","文体活动","工具航材","技能培训","其他"];
+        const catCount = {};
+        categoryKeys.forEach(c=>catCount[c]=0);
+        basesData.forEach(b=>{
+            const intensities = intensityMap[b.name]||{};
+            categoryKeys.forEach(c=>{ if(intensities[c]&&intensities[c]>0) catCount[c]++; });
+        });
+        const roseData = categoryKeys.filter(c=>catCount[c]>0).map(c=>({name:c,value:catCount[c]}));
+        charts.rose.setOption({
+            tooltip:{trigger:'item',formatter:'{b}: 被 {c} 个基地提及'},
+            legend:{bottom:0,textStyle:{fontSize:10}},
+            series:[{type:'pie',roseType:'area',radius:['20%','75%'],data:roseData,label:{fontSize:10,formatter:'{b}\n{c}'},itemStyle:{borderRadius:6}}],
+            color:['#2a5298','#5191d0','#f4a261','#e15554','#6c5b7b','#4c9f70','#9ecae1','#355c7d','#6baed6','#c6dbef']
+        });
+    }
+
+    function initCharts() {
+        charts.bar = echarts.init(document.getElementById('chart-bar'));
+        charts.bar.setOption(getBarOption());
+        charts.rate = echarts.init(document.getElementById('chart-rate'));
+        charts.rate.setOption(getRateOption());
+        charts.bubble = echarts.init(document.getElementById('chart-bubble'));
+        charts.bubble.setOption(getBubbleOption());
+        charts.rose = echarts.init(document.getElementById('chart-rose'));
+        updateRoseChart();
+
+        const wcDiv = document.getElementById('wordcloud-manual');
+        wcDiv.innerHTML = '';
+        wordFreq.forEach(w=>{
+            const span = document.createElement('span');
+            span.textContent = w.text; span.style.fontSize = w.size+'px'; span.style.color = w.color;
+            wcDiv.appendChild(span);
+        });
+    }
+
+    function initialRender() {
+        updateKPIs();
+        updateStatusTable();
+        updateCards();
+        updateStaticProfileTable();
+        updateEditorTable();
+        initCharts();
+    }
+
+    window.switchTab = function(tabName) {
+        document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+        if(tabName==='overview') {
+            document.querySelector('.tab-btn:nth-child(1)').classList.add('active');
+            document.getElementById('tab-overview').classList.add('active');
+        } else if(tabName==='portrait') {
+            document.querySelector('.tab-btn:nth-child(2)').classList.add('active');
+            document.getElementById('tab-portrait').classList.add('active');
+        } else {
+            document.querySelector('.tab-btn:nth-child(3)').classList.add('active');
+            document.getElementById('tab-editor').classList.add('active');
+        }
+        setTimeout(()=>{ Object.values(charts).forEach(c=>c.resize()); }, 50);
+    };
+
+    window.resetAllData = function() {
+        basesData = JSON.parse(JSON.stringify(originalBases));
+        updateAllViews();
+    };
+
+    window.addEventListener('resize', ()=> Object.values(charts).forEach(c=>c.resize()));
+
+    function debounce(fn, delay=100) { let timer; return function(...args){ clearTimeout(timer); timer = setTimeout(()=>fn.apply(this,args), delay); }; }
+
+    initialRender();
+})();
+</script>
+</body>
+</html>
